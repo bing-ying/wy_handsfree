@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+<!--joint_state_publishser for pub joint_state-->
+<!--robot_state_publisher for tf which need topic /joint_state-->
+  <node name="handsfree_hw_node" pkg="handsfree_hw" type="handsfree_hw_node" >
+  <param name="sim_xm" type="bool" value="true" />
+  <param name="with_arm" type="bool" value="true" />
+  
+  </node>
+
+  <param name="robot_description" textfile="$(find xm_urdf)/robots/xm_urdf.URDF" />
+
+  <!--<include file="$(find base_server)/launch/xm_base_server.xml"/> -->
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+      <param name="publish_frequency" type="double" value="20.0" />
+      <!--useful...no -->
+      <!--<remap from="/joint_states" to="mobile_base/joint_states"/>-->
+    </node>
+    <!--joint_state_publisher is used for making the /joint_state avaible -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+      <param name="/use_gui" value="false"/>
+      <rosparam param="/source_list">[/mobile_base/joint_states]</rosparam>
+    </node>
+
+  <!--nodelet fun may not be used , if you want to premote it ,please see how to use the nodelet, xuezhang is too lazy^_^  -->
+  <!--肖：该死，这明显完全没起作用啊-->
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"/>
+  	<node pkg="nodelet" type="nodelet" name="velocity_smoother" 
+	    args="load xm_velocity_smoother/VelocitySmootherNodelet nodelet_manager"   output="screen">
+    <rosparam file="$(find xm_velocity_smoother)/param/standalone.yaml" command="load"/>
+	  <remap from="velocity_smoother/raw_cmd_vel" to="/mobile_base/mobile_base_controller/cmd_vel"/>
+      <remap from="velocity_smoother/smooth_cmd_vel" to="/mobile_base/mobile_base_controller/smooth_cmd_vel"/>
+      <remap from="/velocity_smoother/odometry" to="/mobile_base/mobile_base_controller/odom"/>
+   </node>
+      <!--xiao尝试<remap from="velocity_smoother/raw_cmd_vel" to="/mobile_base/mobile_base_controller/cmd_vel"/>
+      <remap from="velocity_smoother/smooth_cmd_vel" to="/mobile_base/mobile_base_controller/smooth_cmd_vel"/>
+      <remap from="/velocity_smoother/odometry" to="/mobile_base/mobile_base_controller/odom"/>-->
+      
+  <include file="$(find handsfree_hw)/launch/xm_controller.xml"/>
+  <include file="$(find xm_2dnav)/launch/sim_dwa_astar_move_base.launch"/>
+  <!--<include file="$(find xm_arm_server)/launch/xm_arm_server.launch"/>-->
+
+</launch>

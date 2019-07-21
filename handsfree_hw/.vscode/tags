@@ -1,0 +1,10 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+client	../move_arm.py	/^    client = actionlib.SimpleActionClient('\/mobile_base\/xm_arm_controller\/follow_joint_trajectory', FollowJointTrajectoryAction)$/;"	kind:variable	line:33
+goal	../move_arm.py	/^    goal = FollowJointTrajectoryGoal()$/;"	kind:variable	line:36
+move_arm.py	../move_arm.py	1;"	kind:file	line:1
+temp_joint	../move_arm.py	/^    temp_joint=JointTrajectoryPoint()$/;"	kind:variable	line:44

@@ -1,0 +1,4 @@
+mobile_base:
+  gripper_controller:
+  #爪子控制器
+    type: "gripper_controller/GripperController"

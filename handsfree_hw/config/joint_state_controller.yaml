@@ -1,0 +1,5 @@
+mobile_base:
+#这个controller的hardware接口是直接对应的实际数据，此控制器的功能是发布当前关节的姿势，并没有控制作用,相当于更新tf
+  joint_state_controller:
+      type: "joint_state_controller/JointStateController"
+      publish_rate: 50

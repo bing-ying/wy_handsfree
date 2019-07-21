@@ -1,0 +1,7 @@
+<launch>
+  <node name="base_server" pkg="base_server" type="base_server_node" output="screen">
+  <param name="way_of_follow" value="laser"/>
+  <param name="follow"  value="false"/>
+  <param name="shopping"  value="true"/>
+  </node>
+</launch>

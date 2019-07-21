@@ -1,0 +1,7 @@
+<launch>
+  <!--<node pkg="base_server" type="calibrate_angular.py" name="angular_test">-->
+  <node pkg="base_server" type="calibrate_linear.py" name="linear_test">
+    <remap from="/angular_test/cmd_vel" to="/mobile_base/mobile_base_controller/cmd_vel" />
+    <remap from="/linear_test/cmd_vel" to="/mobile_base/mobile_base_controller/cmd_vel" />
+  </node>
+</launch>

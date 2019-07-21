@@ -1,0 +1,6 @@
+mobile_base:
+  xm_lifting_controller:
+  #机械臂控制器
+    type: "motor_controller/MotorController"
+    joints:
+      - joint_lifting

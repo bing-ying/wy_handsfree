@@ -1,0 +1,4 @@
+mobile_base: 
+   xm_simple_head_controller:
+   #头部控制器
+      type: "xm_simple_head_controller/XmSimpleHeadController"

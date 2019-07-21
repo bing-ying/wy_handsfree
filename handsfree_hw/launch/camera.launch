@@ -1,0 +1,8 @@
+<launch>
+
+<node 
+    pkg="tf" 
+    type="static_transform_publisher" 
+    name="xm_camera_link_broadcaster" 
+    args="-0.2 0 1.00 0 0 0 base_footprint camera_link 50" />  
+</launch>

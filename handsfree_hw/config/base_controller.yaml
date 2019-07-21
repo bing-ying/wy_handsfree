@@ -1,0 +1,4 @@
+mobile_base:
+  mobile_base_controller:
+#    底盘控制器
+    type: base_simple_controller/BaseSimpleController

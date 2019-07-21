@@ -1,0 +1,10 @@
+mobile_base:
+  xm_arm_controller:
+  #机械臂控制器
+    type: "position_controllers/JointTrajectoryController"
+    joints:
+      - joint_waist
+      - joint_big_arm
+      - joint_fore_arm
+      - joint_wrist
+      - joint_small_arm
