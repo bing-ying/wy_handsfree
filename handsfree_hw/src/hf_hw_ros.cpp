@@ -25,15 +25,15 @@
 namespace handsfree_hw{
 uint8_t plat_flag=0;
 
-HF_HW_ros::HF_HW_ros(ros::NodeHandle &nh, std::string url, std::string config_addr) :
-    hf_hw_(url, config_addr),
+HF_HW_ros::HF_HW_ros(ros::NodeHandle &nh, std::string url, std::string config_addr,bool use_sim_) :
+    hf_hw_(url, config_addr, use_sim_),
     nh_(nh)
 {
     //get the parameter
     //设置这个以后就不用spin了
     //tempi=0;
-    sim_xm_ =false;
-    nh_.getParam("/handsfree_hw_node/sim_xm",sim_xm_);//：从参数服务器获取launch文件中设定的同名参数sim_xm
+    sim_xm_ = use_sim_;
+    //：从参数服务器获取launch文件中设定的同名参数sim_xm
     if(!sim_xm_){
         
         ROS_ERROR("Started xm_robot connection on port /dev/ttyUSB0");          
@@ -205,7 +205,7 @@ void HF_HW_ros::mainloop()
     {
         if(!sim_xm_){
             hf_hw_.checkHandshake();
-            // if(!hf_hw_.updateCommand(READ_GLOBAL_COORDINATE, count))
+            /*// if(!hf_hw_.updateCommand(READ_GLOBAL_COORDINATE, count))
                 hf_hw_.updateCommand(READ_GLOBAL_COORDINATE, count);
             // if(!hf_hw_.updateCommand(READ_ROBOT_SPEED, count))
                 hf_hw_.updateCommand(READ_ROBOT_SPEED, count);
@@ -220,18 +220,18 @@ void HF_HW_ros::mainloop()
             }
             // if(!hf_hw_.updateCommand(SET_ROBOT_SPEED, count))
             /////  
-            
+            */
             readBufferUpdate();
             
             //std::cout<< "* *"<<std::endl;
-            hf_hw_.updateCommand(SET_ROBOT_SPEED, count);
+            hf_hw_.updateWriteCommand(SET_ROBOT_SPEED, count);
             //ROS_INFO("head1_servo1_cmd_ = %.4f  head1_servo2_cmd_=%.4f" , head1_servo1_cmd_ ,head1_servo2_cmd_);
             if(with_arm_){
-                hf_hw_.updateCommand(SET_ARM_TOTAL, count);             
-                hf_hw_.updateCommand(PLAT_MOVE, count);
-                hf_hw_.updateCommand(SET_CLAW, count);
+                hf_hw_.updateWriteCommand(SET_ARM_TOTAL, count);             
+                hf_hw_.updateWriteCommand(PLAT_MOVE, count);
+                hf_hw_.updateWriteCommand(SET_CLAW, count);
             //if (with_arm_)
-                hf_hw_.updateCommand(SET_WRIST,count);
+                hf_hw_.updateWriteCommand(SET_WRIST,count);
                     // due to we donnot call the chassis to return the gripper state to the handle
             // so we should manual update the handle for the /joint_state topic
                 gripper_pos_[0]= gripper_cmd_[0];

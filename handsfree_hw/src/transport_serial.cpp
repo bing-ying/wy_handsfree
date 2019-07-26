@@ -24,6 +24,7 @@ TransportSerial::TransportSerial() :
     Transport("serial:///dev/ttyUSB0")
 {
     params_.serialPort = "/dev/ttyUSB0";
+    read_count=0;
     if (!initializeSerial())//：假如没有完成初始化则发送错误报告
     {
         std::cerr << "serial Transport initialize failed ,please check your system" <<std::endl;
@@ -59,6 +60,7 @@ TransportSerial::TransportSerial(std::string url) :
 
 void TransportSerial::mainRun()//重复从底层读取data型数据包
 {
+    //std::cout<<"lalala"<<std::endl;
     //std::cout << "Transport main read/write started" <<std::endl;
     start_a_read();
     ios_->run();//：阻塞执行事件循环
@@ -90,8 +92,14 @@ void TransportSerial::readHandler(const boost::system::error_code &ec, size_t by
 
     boost::mutex::scoped_lock lock(read_mutex_);//：锁定读取
     //：从临时异步阅读缓冲区读取数据
-    Buffer data(temp_read_buf_.begin(), temp_read_buf_.begin() + bytesTransferred);
-    read_buffer_.push(data);//read_buffer_用来存储读上来的data包 ：向读入缓冲区输入数据
+        Buffer data(temp_read_buf_.begin(), temp_read_buf_.begin() + bytesTransferred);
+        read_buffer_.push(data);//read_buffer_用来存储读上来的data包 ：向读入缓冲区输入数据
+        //std::cout<< read_buffer_.size()<<std::endl;
+    /*for(int i=0;i<2;i++)
+    {
+        std::cout<<+static_cast<unsigned char>(read_buffer_.front()[i])<<" ";
+    }*/
+    //std::cout<<std::endl;
     start_a_read();
 }
 
@@ -135,6 +143,11 @@ Buffer TransportSerial::readBuffer()
     {
         Buffer data(read_buffer_.front());
         read_buffer_.pop();
+        /*for(int i=0;i<data.size();i++)
+        {
+            std::cout<<+static_cast<unsigned char>(data[i])<<" ";
+        }
+        std::cout<<std::endl;*/
         return data;//：返回读取的数据，假如缓冲区为空则返回也为空
     }
     Buffer data;

@@ -56,7 +56,7 @@ namespace handsfree_hw{
 class HF_HW_ros:public hardware_interface::RobotHW{
 
 public:
-    HF_HW_ros(ros::NodeHandle &nh, std::string url, std::string config_addr);
+    HF_HW_ros(ros::NodeHandle &nh, std::string url, std::string config_addr , bool use_sim_);
 
     double getFreq()const
     {
@@ -69,6 +69,8 @@ public:
 
 private:
     //communication with embeded system
+    boost::mutex read_mutex_3;
+
     HF_HW hf_hw_;
     ros::NodeHandle nh_;
     ros::CallbackQueue queue_;
@@ -156,12 +158,13 @@ private:
 
     inline void readBufferUpdate()
     {
+        boost::mutex::scoped_lock lock(read_mutex_3);
       
         x_     = hf_hw_.getRobotAbstract()->measure_global_coordinate.x;
         y_     = hf_hw_.getRobotAbstract()->measure_global_coordinate.y;
         theta_ = hf_hw_.getRobotAbstract()->measure_global_coordinate.z;
        // if(tempi%30==0)
-       // ROS_ERROR("measure_global_coordinate:         x_:%f ;y_:%f ;theta_:%f",x_,y_,theta_);
+       //ROS_ERROR("measure_global_coordinate:         x_:%f ;y_:%f ;theta_:%f",x_,y_,theta_);
 
         x_vel_ = hf_hw_.getRobotAbstract()->measure_robot_speed.x;
         y_vel_ = hf_hw_.getRobotAbstract()->measure_robot_speed.y;

@@ -59,12 +59,13 @@ public:
 	{
 		return initialize_ok_;
 	}
-
 protected:
 	// for communication location ：通讯地址
 	std::string comm_url_;//串口地址
 	std::queue<Buffer> write_buffer_;//：写缓冲区
 	std::queue<Buffer> read_buffer_;//：读缓冲区
+
+	
 
 	bool initialize_ok_;
 

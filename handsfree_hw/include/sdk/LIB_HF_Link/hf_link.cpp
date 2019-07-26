@@ -147,7 +147,7 @@ unsigned char HFLink::receiveFiniteStates(const unsigned char rx_data)
         }
         else
         {
-            printf("check sum error \n");
+            //printf("check sum error \n");
             receive_state_ = WAITING_FF1;
         }
         break;
@@ -278,8 +278,10 @@ unsigned char HFLink::packageAnalysis(void)
     return analysis_state;//肖：只要包没问题,且假如收到CLEAR_COORDINATE_DATA时本机是下位机，此处返回都是1
 }
 //肖：执行读取命令
+
 unsigned char HFLink::readCommandAnalysis(const Command command_state , unsigned char* p , const unsigned short int len)
 {    
+    boost::mutex::scoped_lock lock(read_mutex_2);
     if (hf_link_node_model==1)//肖：上位机收到读取的命令后，自动更新机器人的相关部件信息
     { // master   , means the slave feedback a package to master , and the master save this package
         if((rx_message_.length-1) != len)//肖：确认下位机上传的信息长度与机器人相关部件信息长度是否匹配
@@ -325,7 +327,7 @@ unsigned char HFLink::setCommandAnalysis(const Command command_state , unsigned 
         //肖：从rx_message_.data[1]复制len个字节到p，p即机器人相关部件，此即为更新机器人相关数据
         memcpy(p , &rx_message_.data[1] , len);//肖：就算是握手命令，这一步也会被执行，更新测量的全局坐标系
         if(command_state==SHAKING_HANDS) shaking_hands_state=1;   //SHAKING_HANDS not need ack to master
-        else sendStruct(command_state  , (unsigned char *)ack , 0); //ack , tell the master , i receive your set package肖：发送ack
+        //else sendStruct(command_state  , (unsigned char *)ack , 0); //ack , tell the master , i receive your set package肖：发送ack
         receive_package_renew[(unsigned char)command_state] = 1 ;  //update receive flag , and wait the cpu to deal
     }
     return 1;

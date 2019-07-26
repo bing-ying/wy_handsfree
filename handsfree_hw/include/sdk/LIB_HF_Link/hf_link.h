@@ -19,7 +19,7 @@
 
 #ifndef HF_LINK_H
 #define HF_LINK_H
-
+#include <handsfree_hw/transport_serial.h>
 #include "robot_abstract.h"
 
 #define HF_LINK_NODE_MODEL  1    //1master  0slave
@@ -146,7 +146,7 @@ private:
     unsigned char my_id;
     unsigned char friend_id;
     unsigned char hf_link_ack_en;         //enable hflink ack
-
+    boost::mutex read_mutex_2;
     // robot abstract pointer to hflink
     RobotAbstract* my_robot;
     Recstate   receive_state_;//肖：表示希望接收的通信状态，这个是自动累加的，希望的状态收到了就自动等待后面的状态了
@@ -173,6 +173,8 @@ private:
     //肖：组装要发送的信息
     void sendStruct(const Command command_state , unsigned char* p , const unsigned short int len);
     void sendMessage(void);//肖：组装要发送的信息包
+    
+    
 };
 
 

@@ -19,7 +19,6 @@
 #define HF_HW_H_
 
 #include <fstream>
-#include <handsfree_hw/transport_serial.h>
 #include <hf_link.h>
 #include <cstdlib>
 
@@ -27,10 +26,9 @@ namespace handsfree_hw {
 
 class HF_HW{
 public:
-	HF_HW(std::string url, std::string config_addr);
-
-	bool updateCommand(const Command &command, int count);
-
+	HF_HW(std::string url, std::string config_addr, bool use_sim_);
+	bool updateWriteCommand(const Command &command, int count);
+	void updateReadCommand();
 	void updateRobot();
 
 	inline RobotAbstract* getRobotAbstract()//：返回抽象机器人指针
@@ -68,6 +66,9 @@ private:
 	//：维护一个时间，即线程的阻塞等待
 	boost::shared_ptr<boost::asio::deadline_timer> timer_;
 
+
+	boost::thread thread_2;
+
 	//for reading config file
 	std::fstream file_;
 	bool initialize_ok_;
@@ -81,6 +82,8 @@ private:
 	bool time_out_flag_;//：超时标志
 	boost::mutex wait_mutex_;//：等待锁
 	bool ack_ready_;//：是否已经收到ack
+	int loop_counter;
+
 	void timeoutHandler(const boost::system::error_code &ec);
 	
 	inline void sendCommand(const Command command_state)
@@ -91,11 +94,12 @@ private:
 		Buffer data(hflink_->getSerializedData(), hflink_->getSerializedLength() + hflink_->getSerializedData());//包装组装好的tx_buffer
 		//？？：取得缓冲区的信息，将它包装进一个vector类型
 		port_->writeBuffer(data);//串口写入组装好的tx_buffer
-		// for(int i=0;i<data.size();i++)
-		// {
-		// 	std::cout<<std::hex<<(int)data[i]<<" ";
-		// }
-		// std::cout<<std::endl;
+		//std::cout<<data.size()<<std::endl;
+		//for(int i=0;i<data.size();i++)
+		 //{
+		 //	std::cout<<std::hex<<(int)data[i]<<" ";
+		 //}
+		 //std::cout<<std::endl;
 	}
 	
 	inline uint8_t checkUpdate(const Command command_state)
@@ -107,8 +111,6 @@ private:
 		if (hflink_command_set_current_[command_state] == 0 ) return 1;
 		return 0;
 	}
-
-	
 
 	// a single object for robot
 	RobotAbstract my_robot_;

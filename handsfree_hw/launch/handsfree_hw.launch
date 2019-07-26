@@ -2,7 +2,7 @@
 <launch>
 <!--joint_state_publishser for pub joint_state-->
 <!--robot_state_publisher for tf which need topic /joint_state-->
-  <node name="handsfree_hw_node" pkg="handsfree_hw" type="handsfree_hw_node" >
+  <node name="handsfree_hw_node" pkg="handsfree_hw" type="handsfree_hw_node" output="screen" >
   <param name="sim_xm" type="bool" value="false" />
   <param name="with_arm" type="bool" value="true" />
   <param name="controller_freq_" type="double" value="50.0" />

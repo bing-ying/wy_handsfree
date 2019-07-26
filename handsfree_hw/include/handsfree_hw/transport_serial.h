@@ -58,7 +58,8 @@ public:
 
 	virtual Buffer readBuffer();//：读缓冲,基类的实现	
 
-	virtual void writeBuffer(Buffer &data);//：写缓冲，基类的实现	
+	virtual void writeBuffer(Buffer &data);//：写缓冲，基类的实现
+		
 
 private:
 	//：一个指向boost::asio::serial_port类型的智能指针，串口通信由asio组件的serial_port类完成
@@ -68,6 +69,7 @@ private:
 	//：数据类型为std::vector<uint8_t>的临时异步阅读缓冲区
 	Buffer temp_read_buf_;
     //：控制一个线程执行mainrun()函数
+
 	boost::thread thread_;
 	// locks：互斥锁
 	boost::mutex port_mutex_;//：端口锁
@@ -83,6 +85,9 @@ private:
 	void readHandler(const boost::system::error_code &ec, size_t bytesTransferred);
 	//：被start_a_write调用处理写入
 	void writeHandler(const boost::system::error_code &ec);
+	int read_count;
+
+	
 };
 
 }

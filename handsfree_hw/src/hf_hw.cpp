@@ -20,8 +20,10 @@
 
 namespace handsfree_hw {
 
-HF_HW::HF_HW(std::string url, std::string config_addr)
-{                                 //：复制"://"前的字符串
+HF_HW::HF_HW(std::string url, std::string config_addr, bool use_sim_)
+{                
+    loop_counter = 0;
+                     //：复制"://"前的字符串
     std::string transport_method = url.substr(0, url.find("://"));
     if (transport_method == "serial")
     {                    //：初始化基类串口
@@ -47,7 +49,7 @@ HF_HW::HF_HW(std::string url, std::string config_addr)
             std::string temp;
             //hflink_command_set_[i]表示是否发送对应命令，hflink_freq_[i]表示相应命令的发送频率
             file_ >> temp >> hflink_command_set_[i] >> hflink_freq_[i];
-            std::cout<< temp << hflink_command_set_[i] << hflink_freq_[i]<<std::endl;
+            //std::cout<< temp << hflink_command_set_[i] << hflink_freq_[i]<<std::endl;
         }
         file_.close();
         initialize_ok_ = port_->initialize_ok();
@@ -55,6 +57,18 @@ HF_HW::HF_HW(std::string url, std::string config_addr)
     {
         std::cerr << "config file can't be opened, check your file load " <<std::endl;
         initialize_ok_ = false;
+    }
+    if(use_sim_ == 0)
+    {
+        try
+        {
+            thread_2 = boost::thread(boost::bind(&HF_HW::updateReadCommand, this));
+        }
+        catch(std::exception &e)
+        {
+            std::cerr << "read thread create failed " << std::endl;
+            std::cerr << "Error Info: " << e.what() <<std::endl;
+        }
     }
 }
 
@@ -101,7 +115,7 @@ void HF_HW::updateRobot()
         ack_ready_ = false;
         while (!ack_ready_)
         {//超时或者发送的所有命令下位机都正常接受了才会退出循环
-            for (int i = 1; i < data.size(); i++)
+            for (int i = 0; i < data.size(); i++)
             {//该循环将把整个数据包分析一遍
                 //std::cout<<"get byte   :"<< data[i]<< std::endl;
                 if (hflink_->byteAnalysisCall(data[i]))
@@ -111,7 +125,7 @@ void HF_HW::updateRobot()
                     uint8_t temp = 1;
                     for (int i = 1; i < LAST_COMMAND_FLAG; i++)
                         temp = temp & checkUpdate((Command)i);//这里可以考虑成0001&0001或0001&0000
-                    std::cout<< temp <<std::endl;
+                    //std::cout<< temp <<std::endl;
                     /*如果发送的所有命令都被接收到了此处就为1，but打印出这个有什么卵用吗？下面反正都打印了
                     上位机在发送相关命令后下位机收到了会发送给看似没有什么卵用的ack，这个ack虽然不包含实际数据，但是包含有接收到的命令
                     可以让上位机知道命令有没有正常被下位机处理*/
@@ -134,17 +148,14 @@ void HF_HW::updateRobot()
     }
 }
 
-bool HF_HW::updateCommand(const Command &command, int count)
+bool HF_HW::updateWriteCommand(const Command &command, int count)
 {//按照相应频率发送命令
-    boost::asio::deadline_timer cicle_timer_(*(port_->getIOinstace()));
-    cicle_timer_.expires_from_now(boost::posix_time::millisec(time_out_));//值过低会timeout
-    // update command set  data from embedded system
     if (hflink_command_set_[command] != 0)
     {
         int cnt = count % 100;
         if (cnt %  (100 / hflink_freq_[command]) == 0)
         {
-            std::cout<<std::hex<<command;//注意此处输出的是16进制的command
+            //std::cout<<std::hex<<command;//注意此处输出的是16进制的command
             sendCommand(command);//根据command的类型发送数据，已写入串口
         } else
         {
@@ -154,38 +165,72 @@ bool HF_HW::updateCommand(const Command &command, int count)
     }
     //上面的代码完成定时向stm32发送指令，下面的代码完成分析接收包的信息
     // 相当于每发送一次指令后,程序就卡在下述代码段等待数据反馈
-    Buffer data = port_->readBuffer();
-    ack_ready_ = false;
-    while (!ack_ready_)//：两种情况下会退出循环，一是超时，二是成功下位机成功接受了命令
-    {
-        // for (int i = 0; i < data.size(); i++)
-        // {注释于1.27
-        //     unsigned int a= int(data[i]);
-        //     ROS_INFO_STREAM(std::hex<<a);
-        // }
-        if (data.size()) //:我觉得不需要
-        for (int i = 0; i < data.size(); i++)//假如data为空，则size()运行结果为0
-        {
-            if (hflink_->byteAnalysisCall(data[i]))//分析包的完整性，完整时分析包并执行所属操作,对机器人ADT的变量更新即在这层调用完成
-            {
-                // one package ack arrived
-                // std::cerr<<"I complete a package command is: "<<command<<std::endl;
-                ack_ready_ = true;
-            }//else{
-               // std::cerr<<"mmp,update Command false,ready to updateCommand again"<<std::endl;
-               // return false;
-           // }
-        }
-        data = port_->readBuffer();//取出早先从底层读出存储到read_buffer_的包
-        //：这里的readBuffer()
-        if (cicle_timer_.expires_from_now().is_negative())//超时报错
-        {
-            std::cerr<<"Timeout continue skip this package "<<command<<std::endl;
-            return false;
-        }
-    }
+    
     return true;
 }
+
+void HF_HW::updateReadCommand()
+{
+    while(1)
+    {
+            boost::asio::io_service io;
+            boost::asio::deadline_timer t(io, boost::posix_time::millisec(15));  
+            t.wait();  
+           Buffer data = port_->readBuffer();
+           /*for(int i=0;i<data.size();i++)
+                {
+                    std::cout<<+static_cast<unsigned char>(data[i])<<" ";
+                }
+                std::cout<<std::endl;*/
+                //std::cout<< "lala"<<data.size()<<std::endl;
+                //std::cout<<loop_counter<<std::endl;
+                loop_counter ++;
+            if(!data.empty())
+            {
+                loop_counter = 0;
+                boost::asio::deadline_timer cicle_timer_(*(port_->getIOinstace()));
+                cicle_timer_.expires_from_now(boost::posix_time::millisec(time_out_));
+                //std::cout << "lalal"<<read_queue.size()<<std::endl;
+                /*for(int i=0;i<data.size();i++)
+                {
+                    std::cout<<+static_cast<unsigned char>(data[i])<<" ";
+                }
+                std::cout<<std::endl;*/
+                ack_ready_ = false;
+                bool flag = 0;
+                while (!ack_ready_)//：两种情况下会退出循环，一是超时，二是成功下位机成功接受了命令
+                {
+                    // for (int i = 0; i < data.size(); i++)
+                    // {注释于1.27
+                    //     unsigned int a= int(data[i]);
+                    //     ROS_INFO_STREAM(std::hex<<a);
+                    // }
+                    for (int i = 0; i < data.size(); i++)//假如data为空，则size()运行结果为0
+                    {
+                        if (hflink_->byteAnalysisCall(data[i]))//分析包的完整性，完整时分析包并执行所属操作,对机器人ADT的变量更新即在这层调用完成
+                        {
+                            // one package ack arrived
+                            // std::cerr<<"I complete a package command is: "<<command<<std::endl;
+                            ack_ready_ = true;
+                        }//else{
+                        // std::cerr<<"mmp,update Command false,ready to updateCommand again"<<std::endl;
+                        // return false;
+                    // }
+                    }
+                   
+                    if (cicle_timer_.expires_from_now().is_negative())//超时报错
+                    {
+                        ack_ready_ = true;//丢掉坏包，跳出循环
+                        std::cerr<<"Timeout continue skip this package "<<+static_cast<unsigned char>(data[6])<<std::endl;
+                    }
+                }
+            }
+            if(loop_counter >= 20)
+                    {
+                       std::cout<<"OH! The link has been broken!" << std::endl; 
+                    }
+        }
+    }
 }
 
 
